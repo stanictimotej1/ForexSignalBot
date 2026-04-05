@@ -2,7 +2,7 @@ name: Forex Signal Bot
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '*/15 * * * 1-5'  # Vsake 15min, samo pon-pet
   workflow_dispatch:
 
 jobs:
@@ -21,6 +21,15 @@ jobs:
 
       - name: Namesti odvisnosti
         run: pip install -r requirements.txt
+
+      - name: Pošlji testni email (samo ob ročnem zagonu)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          ALPHA_VANTAGE_API_KEY: ${{ secrets.ALPHA_VANTAGE_API_KEY }}
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+        run: python main.py --mode test
 
       - name: Zaženi forex signal bota
         env:
