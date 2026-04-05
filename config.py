@@ -1,34 +1,33 @@
-name: Forex Signal Bot
+import os
 
-on:
-  schedule:
-    # London + New York overlap: 13:00-18:00 UTC = 15:00-20:00 CEST (poletni čas)
-    # Vsako uro, ponedeljek-petek
-    - cron: '0 13,14,15,16,17,18 * * 1-5'
-  workflow_dispatch:
+PAIRS = ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD", "USDCAD"]
+TIMEFRAMES = ["15min"]
 
-jobs:
-  run-bot:
-    runs-on: ubuntu-latest
+ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY")
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+EMAIL_FROM = os.getenv("EMAIL_FROM")
+EMAIL_TO = os.getenv("EMAIL_TO")
 
-    steps:
-      - name: Checkout repozitorija
-        uses: actions/checkout@v4
+EMA_FAST = 50
+EMA_SLOW = 200
+RSI_PERIOD = 14
+RSI_OVERBOUGHT = 70
+RSI_OVERSOLD = 30
+MACD_FAST = 12
+MACD_SLOW = 26
+MACD_SIGNAL = 9
 
-      - name: Nastavi Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
+MIN_CONFIRMATIONS = 3
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+LOG_FILE = "forex_bot.log"
 
-      - name: Namesti odvisnosti
-        run: pip install -r requirements.txt
-
-      - name: Zaženi forex signal bota
-        env:
-          ALPHA_VANTAGE_API_KEY: ${{ secrets.ALPHA_VANTAGE_API_KEY }}
-          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
-          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
-          EMAIL_TO: ${{ secrets.EMAIL_TO }}
-          LOG_LEVEL: INFO
-        run: python main.py --mode once
+def validate_config():
+    required = {
+        "ALPHA_VANTAGE_API_KEY": ALPHA_VANTAGE_API_KEY,
+        "SENDGRID_API_KEY": SENDGRID_API_KEY,
+        "EMAIL_FROM": EMAIL_FROM,
+        "EMAIL_TO": EMAIL_TO,
+    }
+    missing = [k for k, v in required.items() if not v]
+    if missing:
+        raise ValueError(f"Manjkajo spremenljivke: {', '.join(missing)}")
